@@ -34,12 +34,7 @@ async def populate_queue(workqueue: Workqueue):
         {
             "customFilter": "exclude",
             "fieldName": "absences",
-            "values": [
-                None,
-                None,
-                None,
-                None,
-                "",
+            "values": [                
                 "ABSENCE_BARSEL",
                 "ABSENCE_FRITAGELSE_FOR_JOBLOG"
             ]

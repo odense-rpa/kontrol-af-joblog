@@ -5,6 +5,8 @@ from momentum_client.manager import MomentumClientManager
 from odk_tools.reporting import report
 from odk_tools.tracking import Tracker
 from automation_server_client import WorkItemError
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from requests.exceptions import HTTPError
 
 proces_navn = "Kontrol af joblog"
 
@@ -39,8 +41,18 @@ class MomentumService:
         )
         
 
+    @retry(
+        retry=retry_if_exception_type(HTTPError),
+        stop=stop_after_attempt(10),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        reraise=True
+    )
+    def _hent_personvisitationstatus_med_retry(self, borger):
+        """Hent personvisitationstatus med retry på 504 fejl."""
+        return self.momentum.borgere.hent_personvisitationstatus(borger=borger)
+
     def fritaget_for_joblog(self, borger) -> bool:
-        personvisitationstatus = self.momentum.borgere.hent_personvisitationstatus(borger=borger)
+        personvisitationstatus = self._hent_personvisitationstatus_med_retry(borger)
 
         if not personvisitationstatus:
             raise WorkItemError(f"Personvisitationstatus for borger med CPR {borger['cpr']} ikke fundet i Momentum.")
