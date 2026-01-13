@@ -3,7 +3,13 @@ import logging
 import sys
 
 from datetime import datetime
-from automation_server_client import AutomationServer, Workqueue, WorkItemError, Credential, WorkItemStatus
+from automation_server_client import (
+    AutomationServer,
+    Workqueue,
+    WorkItemError,
+    Credential,
+    WorkItemStatus,
+)
 from momentum_client.manager import MomentumClientManager
 from odk_tools.tracking import Tracker
 from process.momentum_service import MomentumService
@@ -11,15 +17,13 @@ from process.momentum_service import MomentumService
 momentum: MomentumClientManager
 momentum_service: MomentumService
 
+
 async def populate_queue(workqueue: Workqueue):
     filters = [
         {
             "customFilter": "",
             "fieldName": "targetGroupCode",
-            "values": [
-                "INT-KP",
-                "6.2"
-            ]
+            "values": ["INT-KP", "6.2"],
         },
         {
             "customFilter": "",
@@ -28,39 +32,34 @@ async def populate_queue(workqueue: Workqueue):
                 "",
                 "b345ab13-e8b8-409f-b87b-6925268472de",
                 "80180c8c-5863-40ae-a85b-e14d33597e6a",
-                "c58e4d9f-af8e-4553-a3d0-c2b102cc33c2"
-            ]
+                "c58e4d9f-af8e-4553-a3d0-c2b102cc33c2",
+            ],
         },
         {
             "customFilter": "exclude",
             "fieldName": "absences",
-            "values": [                
-                "ABSENCE_BARSEL",
-                "ABSENCE_FRITAGELSE_FOR_JOBLOG"
-            ]
-        }
-
+            "values": ["ABSENCE_BARSEL", "ABSENCE_FRITAGELSE_FOR_JOBLOG"],
+        },
     ]
 
     borgere = momentum.borgere.hent_borgere(filters=filters)
 
-    if not borgere or len(borgere['data']) == 0:
+    if not borgere or len(borgere["data"]) == 0:
         return
 
-    for borger in borgere['data']:
+    for borger in borgere["data"]:
         eksisterende_kødata = workqueue.get_item_by_reference(
             str(borger["cpr"]), status=WorkItemStatus.COMPLETED
         )
         eksisterende_kødata = [
             item
             for item in eksisterende_kødata
-            if item.updated_at > datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            if item.updated_at
+            > datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         ]
 
         if len(eksisterende_kødata) == 0:
-            borger_data = {
-                "cpr": borger["cpr"]                
-            }
+            borger_data = {"cpr": borger["cpr"]}
 
             workqueue.add_item(borger_data, reference=str(borger["cpr"]))
 
@@ -71,29 +70,31 @@ async def process_workqueue(workqueue: Workqueue):
     for item in workqueue:
         with item:
             data = item.data
- 
+
             try:
                 borger = momentum.borgere.hent_borger(cpr=item.reference)
 
                 if not borger:
-                    raise WorkItemError(f"Borger med CPR {item.reference} ikke fundet i Momentum.")
+                    raise WorkItemError(
+                        f"Borger med CPR {item.reference} ikke fundet i Momentum."
+                    )
 
                 if momentum_service.fritaget_for_joblog(borger):
                     continue
-                
+
                 krav_til_jobsøgning = momentum_service.hent_krav_til_jobsøgning(borger)
 
                 if krav_til_jobsøgning is None:
                     continue
 
                 antal_søgte_jobs = momentum_service.hent_joblog_aktiviteter(borger)
-                
+
                 momentum_service.kontroller_jobsøgning(
                     borger=borger,
                     krav_til_jobsøgning=krav_til_jobsøgning,
-                    antal_søgte_jobs=antal_søgte_jobs
+                    antal_søgte_jobs=antal_søgte_jobs,
                 )
-                
+
             except WorkItemError as e:
                 # A WorkItemError represents a soft error that indicates the item should be passed to manual processing or a business logic fault
                 logger.error(f"Error processing item: {data}. Error: {e}")

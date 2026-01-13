@@ -8,6 +8,7 @@ dependencies = [
     "automation-server-client",
     "momentum-client",
     "odk-tools",
+    "ruff>=0.14.11",
     "tenacity>=9.1.2",
 ]
 
