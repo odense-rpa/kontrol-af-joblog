@@ -61,9 +61,8 @@ class MomentumService:
         personvisitationstatus = self._hent_personvisitationstatus_med_retry(borger)
 
         if not personvisitationstatus:
-            raise WorkItemError(
-                f"Personvisitationstatus for borger med CPR {borger['cpr']} ikke fundet i Momentum."
-            )
+            # Momentum returnerer måske ikke data, men vi antager at borger ikke er fritaget
+            return True
 
         person_exempt_names = personvisitationstatus.get("personExemptNames")
 
@@ -86,9 +85,10 @@ class MomentumService:
         job_definition = self.momentum.borgere.hent_jobsøgningsdefinition(borger=borger)
 
         if not job_definition:
-            raise WorkItemError(
-                f"Jobsøgningsdefinition for borger med CPR {borger['cpr']} ikke fundet i Momentum."
+            self.opret_opgave_til_sagsbehandler(
+                borger, "'Krav til jobsøgning' er muligvis tom."
             )
+            return None
 
         krav_tekst = job_definition.get("otherExpectations")
 
@@ -192,6 +192,7 @@ class MomentumService:
                 f"{joblog_entry.get('companyPostCode', '')} "
                 f"{joblog_entry.get('companyTown', '')} "
                 f"{joblog_entry.get('distanceToCompanyInMeters', '')}"
+                f"{joblog_entry.get('hoursPerWeek', '')}"
             )
 
             if job_hash not in unikke_jobs:
