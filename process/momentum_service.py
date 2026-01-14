@@ -62,7 +62,7 @@ class MomentumService:
 
         if not personvisitationstatus:
             # Momentum returnerer måske ikke data, men vi antager at borger ikke er fritaget
-            return True
+            return False
 
         person_exempt_names = personvisitationstatus.get("personExemptNames")
 
