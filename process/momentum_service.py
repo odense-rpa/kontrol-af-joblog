@@ -58,7 +58,10 @@ class MomentumService:
         return self.momentum.borgere.hent_personvisitationstatus(borger=borger)
 
     def fritaget_for_joblog(self, borger) -> bool:
-        personvisitationstatus = self._hent_personvisitationstatus_med_retry(borger)
+        try:
+            personvisitationstatus = self._hent_personvisitationstatus_med_retry(borger)
+        except HTTPError:
+            return False
 
         if not personvisitationstatus:
             # Momentum returnerer måske ikke data, men vi antager at borger ikke er fritaget
