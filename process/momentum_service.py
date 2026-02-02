@@ -85,7 +85,10 @@ class MomentumService:
         return False
 
     def hent_krav_til_jobsøgning(self, borger) -> int | None:
-        job_definition = self.momentum.borgere.hent_jobsøgningsdefinition(borger=borger)
+        try:
+            job_definition = self.momentum.borgere.hent_jobsøgningsdefinition(borger=borger)
+        except Exception as e:
+            job_definition = None
 
         if not job_definition:
             self.opret_opgave_til_sagsbehandler(
