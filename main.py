@@ -79,7 +79,7 @@ async def process_workqueue(workqueue: Workqueue):
                         f"Borger med CPR {item.reference} ikke fundet i Momentum."
                     )
 
-                if momentum_service.fritaget_for_joblog(borger):
+                if momentum_service.fritaget_for_joblog(borger):                    
                     continue
 
                 krav_til_jobsøgning = momentum_service.hent_krav_til_jobsøgning(borger)
