@@ -184,8 +184,8 @@ class MomentumService:
             submission_cph = submission_utc.astimezone(copenhagen_tz)
 
             if (
-                start_dato < created_at < slut_dato
-                and start_dato < submission_cph < slut_dato
+                start_dato <= created_at <= slut_dato
+                and start_dato <= submission_cph <= slut_dato
             ):
                 tidligere_måneds_joblog.append(entry)
 
