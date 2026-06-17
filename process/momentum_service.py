@@ -147,9 +147,7 @@ class MomentumService:
         joblog = self.momentum.borgere.hent_joblog(borger=borger)
 
         if not joblog:
-            raise WorkItemError(
-                f"Joblog for borger med CPR {borger['cpr']} ikke fundet i Momentum."
-            )
+            return 0
 
         copenhagen_tz = ZoneInfo("Europe/Copenhagen")
 
